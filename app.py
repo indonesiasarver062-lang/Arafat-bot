@@ -1,48 +1,29 @@
 from flask import Flask, request
-import requests, os
 
 app = Flask(__name__)
-PAGE_TOKEN = os.environ.get("PAGE_TOKEN")
-VERIFY_TOKEN = "arafat_royal_bot"
+
+VERIFY_TOKEN = "arafat123"
 
 @app.route('/')
-def home(): 
-    return "ARaFat Bot Live - All Country Supported!"
+def home():
+    return "Bot is running!"
 
-@app.route('/webhook', methods=['GET','POST'])
-def webhook():
-    if request.method == 'GET':
-        if request.args.get("hub.verify_token") == VERIFY_TOKEN:
-            return request.args.get("hub.challenge")
-        return "Verification Failed"
+@app.route('/webhook', methods=['GET'])
+def verify():
+    mode = request.args.get('hub.mode')
+    token = request.args.get('hub.verify_token')
+    challenge = request.args.get('hub.challenge')
     
-    data = request.get_json()
-    if data and data.get('object') == 'page':
-        for entry in data['entry']:
-            for m in entry['messaging']:
-                if 'message' in m and 'text' in m['message']:
-                    uid = m['sender']['id']
-                    txt = m['message']['text']
-                    low = txt.lower()
-                    
-                    # All replies in English - All Country Support
-                    if any(x in low for x in ["hi","hello","hey","hlw","salam","hola","bonjour"]):
-                        reply = "Hello! 👑 This is ARaFat 2.0 AI! I support all countries and languages! How can I help you today?"
-                    elif any(x in low for x in ["price","dam","koto","cost","how much"]):
-                        reply = "For price details, please tell me the product name! We have worldwide delivery! 🌍"
-                    elif any(x in low for x in ["love","bhalobashi"]):
-                        reply = "Love you too! ❤️ You are my favorite person!"
-                    elif any(x in low for x in ["who are you","who r u","tumi ke"]):
-                        reply = "I am ARaFat 2.0 AI, your 24/7 smart assistant! I understand all languages and support all countries! 👑"
-                    elif any(x in low for x in ["help","support"]):
-                        reply = "Sure! I am here to help you 24/7! Tell me what you need! I support all countries! 🚀"
-                    else:
-                        # Universal Reply for ANY question in English
-                        reply = f"You said: '{txt}' - I got it! I am ARaFat 2.0 AI, I support all languages and all countries! Tell me more, how can I assist you? 😎🌍"
+    if mode == 'subscribe' and token == VERIFY_TOKEN:
+        print("WEBHOOK_VERIFIED")
+        return challenge, 200
+    else:
+        return "Verification failed", 403
 
-                    requests.post(f"https://graph.facebook.com/v18.0/me/messages?access_token={PAGE_TOKEN}",
-                        json={"recipient": {"id": uid}, "message": {"text": reply}})
-    return "OK"
+@app.route('/webhook', methods=['POST'])
+def webhook():
+    print("Message received")
+    return "EVENT_RECEIVED", 200
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=10000)
